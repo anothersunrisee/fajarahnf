@@ -11,6 +11,7 @@ import EventBadge from './components/EventBadge';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import AdminPanel from './components/AdminPanel';
 
 // Fix for default marker icon in React Leaflet
 // @ts-ignore
@@ -21,7 +22,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-type View = 'work' | 'about' | 'contact';
+type View = 'work' | 'about' | 'contact' | 'admin';
 
 // Custom Behance Icon since it's not in basic Lucide sets
 const BehanceIcon = ({ className }: { className?: string }) => (
@@ -350,6 +351,11 @@ const App: React.FC = () => {
         title: 'Contact | fajarahnf portfolio',
         description: 'Get in touch for collaborations, direction, or high-end design inquiries. Fajar Ahnaf Mahardika is available for global projects.',
         keywords: 'Contact, Collaboration, Hire Designer, Freelance Design, Project Inquiry'
+      },
+      admin: {
+        title: 'Admin Panel | fajarahnf',
+        description: 'Restricted Access',
+        keywords: 'admin, hidden'
       }
     };
 
@@ -362,6 +368,19 @@ const App: React.FC = () => {
     const keywordsMeta = document.getElementById('meta-keywords');
     if (keywordsMeta) keywordsMeta.setAttribute('content', currentSEO.keywords);
   }, [view]);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash === '#admin') {
+        setView('admin');
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    if (window.location.hash === '#admin') {
+      setView('admin');
+    }
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as Theme | null;
@@ -430,6 +449,11 @@ const App: React.FC = () => {
           {view === 'contact' && (
             <motion.div key="contact-view" className="py-10">
               <ContactView />
+            </motion.div>
+          )}
+          {view === 'admin' && (
+            <motion.div key="admin-view" className="py-10">
+              <AdminPanel />
             </motion.div>
           )}
         </AnimatePresence>
