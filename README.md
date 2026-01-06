@@ -13,13 +13,13 @@ Welcome to the personal portfolio of **Fajar Ahnaf Mahardika**. This project is 
 
 ## ✨ Key Features
 
--   **Immersive 3D Experience**: Integrated **Three.js** and **React Three Fiber** for real-time 3D rendering, featuring a physics-based interactive ID badge with theme-aware lighting.
--   **Eclectic Hero Typography**: A custom monochromatic "ransom note" typographic style mixing **Pinyon Script**, **DM Sans**, and **Pixelify Sans** within single words for a high-fashion aesthetic.
--   **Draggable Stickers**: Interactive, draggable stickers in the hero section that maintain position across theme transitions, adding a playful layer to the UX.
--   **Refined UI Design**: Primary font updated to **DM Sans** for a modern feel, accompanied by theme-aware **radial glow backgrounds** and polished bento-grid boundaries.
--   **Smart Bento Grid**: A responsive masonry layout for showcasing projects with automatic aspect ratio detection (Portrait/Landscape/Square).
--   **Theme System**: Coordinated CSS-variable system driving synchronized light and dark modes across all components including 3D scenes and interactive maps.
--   **Custom Admin Panel**: A hidden dashboard to manage projects, upload assets, and edit content dynamically with Supabase integration.
+-   **Immersive 3D Experience**: Integrated **Three.js** and **React Three Fiber** for real-time 3D rendering, featuring a physics-based interactive ID badge with theme-aware lighting and mobile-optimized boundaries.
+-   **Pinterest-style Masonry Gallery**: A dynamic, multi-column gallery for project details that respects natural aspect ratios, providing a professional and compact "Pinterest" aesthetic.
+-   **Eclectic Hero Typography**: A custom monochromatic "ransom note" typographic style mixing **Pinyon Script**, **DM Sans**, and **Pixelify Sans** within single words for a high-fashion, artistic vibe.
+-   **Advanced Admin Panel**: A secure dashboard with **automatic image compression** (web-optimized) and **real-time upload progress bars** for a seamless content management experience.
+-   **Performance Optimized**: Aggressive **resource preloading** for fonts, 3D models, and critical assets, combined with lazy-loading for secondary content.
+-   **Theme System**: Coordinated CSS-variable system driving synchronized light and dark modes across all components including interactive maps and 3D scenes.
+-   **Smart Bento Grid**: Responsive home/work grid layouts with automatic aspect ratio detection for diverse project showcasing.
 
 ## 🛠 Tech Stack
 

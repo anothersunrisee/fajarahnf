@@ -12,6 +12,9 @@ export default function AdminPanel() {
     const [projects, setProjects] = useState<Project[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [editingProject, setEditingProject] = useState<Partial<Project> | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
+    const [uploadingFiles, setUploadingFiles] = useState<string[]>([]);
 
     // Simple hardcoded password for "hidden" access
     const handleLogin = (e: React.FormEvent) => {
@@ -90,6 +93,48 @@ export default function AdminPanel() {
         }
     };
 
+    const compressImage = async (file: File): Promise<Blob | File> => {
+        // Only compress if it's an image and not a gif
+        if (!file.type.startsWith('image/') || file.type === 'image/gif') return file;
+
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target?.result as string;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 1920; // 1080p width approx
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx?.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob(
+                        (blob) => {
+                            if (blob) {
+                                resolve(new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: 'image/jpeg' }));
+                            } else {
+                                resolve(file);
+                            }
+                        },
+                        'image/jpeg',
+                        0.75 // 75% quality is roughly 150ppi perceived quality for web
+                    );
+                };
+            };
+        });
+    };
+
     const handleImageUpload = (field: 'image' | 'contentImages') => async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
 
@@ -97,12 +142,27 @@ export default function AdminPanel() {
         const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/heic'];
         const uploadedUrls: string[] = [];
 
+        setIsUploading(true);
         try {
-            for (const file of files) {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
                 if (file.type && !allowedTypes.includes(file.type) && !file.name.match(/\.(heic|gif|jpg|jpeg|png)$/i)) {
                     alert(`Skipping ${file.name}: Only .png, .jpg, .jpeg, .gif, .heic formats are allowed`);
                     continue;
                 }
+
+                const fileId = `${Date.now()}-${i}`;
+                setUploadingFiles(prev => [...prev, fileId]);
+                setUploadProgress(prev => ({ ...prev, [fileId]: 10 }));
+
+                // Compression
+                let fileToUpload: File | Blob = file;
+                if (file.type !== 'image/gif') {
+                    setUploadProgress(prev => ({ ...prev, [fileId]: 30 }));
+                    fileToUpload = await compressImage(file);
+                }
+
+                setUploadProgress(prev => ({ ...prev, [fileId]: 50 }));
 
                 const fileExt = file.name.split('.').pop();
                 const fileName = `${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
@@ -110,12 +170,18 @@ export default function AdminPanel() {
 
                 const { error: uploadError } = await supabase.storage
                     .from('portfolio-images')
-                    .upload(filePath, file);
+                    .upload(filePath, fileToUpload);
 
                 if (uploadError) throw uploadError;
 
+                setUploadProgress(prev => ({ ...prev, [fileId]: 100 }));
+
                 const { data } = supabase.storage.from('portfolio-images').getPublicUrl(filePath);
                 uploadedUrls.push(data.publicUrl);
+
+                // Short delay to show 100% completion
+                await new Promise(r => setTimeout(r, 500));
+                setUploadingFiles(prev => prev.filter(id => id !== fileId));
             }
 
             if (uploadedUrls.length > 0) {
@@ -132,11 +198,9 @@ export default function AdminPanel() {
             }
         } catch (error: any) {
             console.error('Error uploading image:', error);
-            if (error.message && error.message.includes('bucket not found')) {
-                alert('Error: "portfolio-images" bucket not found. Please create it in your Supabase dashboard.');
-            } else {
-                alert(`Error upload: ${error.message || 'Unknown error'}`);
-            }
+            alert(`Error upload: ${error.message || 'Unknown error'}`);
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -257,50 +321,82 @@ export default function AdminPanel() {
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold uppercase text-zinc-500">Main Image (Header & Card)</label>
                                     <div className="flex gap-2">
-                                        <input
-                                            className="w-full p-3 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 outline-none focus:border-blue-500 font-bold text-sm font-mono overflow-hidden"
-                                            value={editingProject.image || ''}
-                                            readOnly={true}
-                                            placeholder="Upload image..."
-                                        />
-                                        <label className="p-3 bg-blue-600 text-white rounded-xl cursor-pointer hover:bg-blue-700 transition flex items-center justify-center">
+                                        <div className="relative flex-1">
+                                            <input
+                                                className="w-full p-3 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 outline-none focus:border-blue-500 font-bold text-sm font-mono overflow-hidden"
+                                                value={editingProject.image || ''}
+                                                readOnly={true}
+                                                placeholder="Upload image..."
+                                            />
+                                            {isUploading && uploadingFiles.length > 0 && (
+                                                <div className="absolute inset-0 bg-blue-500/10 rounded-xl overflow-hidden pointer-events-none">
+                                                    <div
+                                                        className="h-full bg-blue-500/20 transition-all duration-300"
+                                                        style={{ width: `${Object.values(uploadProgress)[0] || 0}%` }}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <label className={`p-3 bg-blue-600 text-white rounded-xl cursor-pointer hover:bg-blue-700 transition flex items-center justify-center ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                             <ImageIcon className="w-5 h-5" />
-                                            <input type="file" accept=".png,.jpg,.jpeg,.gif,.heic" className="hidden" onChange={handleImageUpload('image')} />
+                                            <input
+                                                type="file"
+                                                accept=".png,.jpg,.jpeg,.gif,.heic"
+                                                className="hidden"
+                                                disabled={isUploading}
+                                                onChange={handleImageUpload('image')}
+                                            />
                                         </label>
                                     </div>
-                                    {editingProject.image && <img src={editingProject.image} alt="Preview" className="h-20 w-auto rounded-lg mt-2 border border-zinc-200 dark:border-zinc-800" />}
+                                    {editingProject.image && (
+                                        <div className="relative h-20 w-fit mt-2">
+                                            <img src={editingProject.image} alt="Preview" className="h-full w-auto rounded-lg border border-zinc-200 dark:border-zinc-800" />
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold uppercase text-zinc-500">Article Images (Max 10)</label>
                                     <div className="flex gap-2">
-                                        <div className="flex-1 p-3 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 outline-none focus:border-blue-500 font-bold text-sm overflow-hidden flex flex-wrap gap-2">
-                                            {editingProject.contentImages?.length ? (
-                                                editingProject.contentImages.map((img, idx) => (
-                                                    <div key={idx} className="relative group w-16 h-16">
-                                                        <img src={img} alt={`Content ${idx}`} className="w-full h-full object-cover rounded-lg" />
-                                                        <button
-                                                            onClick={() => {
-                                                                const newImages = editingProject.contentImages!.filter((_, i) => i !== idx);
-                                                                setEditingProject({ ...editingProject, contentImages: newImages });
-                                                            }}
-                                                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                        >
-                                                            <X className="w-3 h-3" />
-                                                        </button>
-                                                    </div>
-                                                ))
-                                            ) : (
+                                        <div className="flex-1 p-3 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 outline-none focus:border-blue-500 font-bold text-sm overflow-hidden flex flex-wrap gap-2 min-h-[66px]">
+                                            {editingProject.contentImages?.map((img, idx) => (
+                                                <div key={idx} className="relative group w-16 h-16">
+                                                    <img src={img} alt={`Content ${idx}`} className="w-full h-full object-cover rounded-lg" />
+                                                    <button
+                                                        onClick={() => {
+                                                            const newImages = editingProject.contentImages!.filter((_, i) => i !== idx);
+                                                            setEditingProject({ ...editingProject, contentImages: newImages });
+                                                        }}
+                                                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        <X className="w-3 h-3" />
+                                                    </button>
+                                                </div>
+                                            ))}
+
+                                            {/* Uploading Placeholders */}
+                                            {uploadingFiles.map((fileId) => (
+                                                <div key={fileId} className="w-16 h-16 bg-zinc-200 dark:bg-zinc-800 rounded-lg flex items-center justify-center relative overflow-hidden">
+                                                    <Loader2 className="w-5 h-5 animate-spin text-blue-500 z-10" />
+                                                    <div
+                                                        className="absolute bottom-0 left-0 right-0 bg-blue-500/20 transition-all duration-300"
+                                                        style={{ height: `${uploadProgress[fileId] || 0}%` }}
+                                                    />
+                                                </div>
+                                            ))}
+
+                                            {!editingProject.contentImages?.length && !uploadingFiles.length && (
                                                 <span className="text-zinc-400 font-normal">No images uploaded</span>
                                             )}
                                         </div>
-                                        <label className="p-3 bg-blue-600 text-white rounded-xl cursor-pointer hover:bg-blue-700 transition flex items-center justify-center h-fit">
+                                        <label className={`p-3 bg-blue-600 text-white rounded-xl cursor-pointer hover:bg-blue-700 transition flex items-center justify-center h-fit ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                             <ImageIcon className="w-5 h-5" />
                                             <input
                                                 type="file"
                                                 accept=".png,.jpg,.jpeg,.gif,.heic"
                                                 multiple
                                                 className="hidden"
+                                                disabled={isUploading}
                                                 onChange={handleImageUpload('contentImages')}
                                             />
                                         </label>

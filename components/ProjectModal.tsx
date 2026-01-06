@@ -80,49 +80,6 @@ const Lightbox: React.FC<{ src: string | null; onClose: () => void }> = ({ src, 
   </AnimatePresence>
 );
 
-// Smart Bento Image Component
-const BentoGridImage: React.FC<{ src: string; index: number; onClick: () => void }> = ({ src, index, onClick }) => {
-  const [spanClass, setSpanClass] = React.useState('col-span-1 row-span-1 opacity-0');
-
-  const handleLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.currentTarget;
-    const ratio = img.naturalWidth / img.naturalHeight;
-
-    // Determine span based on ratio
-    // Landscape (Wide)
-    if (ratio > 1.2) {
-      setSpanClass('col-span-2 row-span-1 opacity-100');
-    }
-    // Portrait (Tall)
-    else if (ratio < 0.8) {
-      setSpanClass('col-span-1 row-span-2 opacity-100');
-    }
-    // Square-ish
-    else {
-      setSpanClass('col-span-1 row-span-1 opacity-100');
-    }
-  };
-
-  return (
-    <div
-      className={`relative group rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-900 shadow-sm border border-zinc-200 dark:border-zinc-800 cursor-zoom-in transition-all duration-500 hover:shadow-lg ${spanClass}`}
-      onClick={onClick}
-    >
-      <img
-        src={src}
-        alt={`Gallery ${index}`}
-        onLoad={handleLoad}
-        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-      />
-      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-        <span className="bg-white/90 dark:bg-black/80 backdrop-blur text-xs font-bold px-3 py-1 rounded-full text-zinc-900 dark:text-white pointer-events-none">
-          Expand
-        </span>
-      </div>
-    </div>
-  );
-};
-
 // Main ProjectModal component exported as default
 const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose, allProjects = [], onSelectProject }) => {
   const [lightboxImage, setLightboxImage] = React.useState<string | null>(null);
@@ -208,18 +165,30 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose, allProjec
                           {project.fullContent || project.description}
                         </div>
 
-                        {/* Content Images Bento Grid (Including Main Image) */}
+                        {/* Content Images (Pinterest Masonry Style) */}
                         <div className="space-y-6">
-                          <h3 className="text-xl font-bold text-zinc-900 dark:text-white">Gallery</h3>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 auto-rows-[200px] grid-flow-dense">
-                            {/* Include main image if no video, then content images */}
+                          <h3 className="text-xl font-black text-zinc-900 dark:text-white">
+                            Gallery Preview
+                          </h3>
+                          <div className="columns-2 md:columns-3 gap-4 space-y-4">
                             {(!project.videoUrl ? [project.image, ...(project.contentImages || [])] : (project.contentImages || [])).map((img, idx) => (
-                              <BentoGridImage
+                              <div
                                 key={idx}
-                                src={img}
-                                index={idx}
+                                className="relative group rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 cursor-zoom-in transition-all duration-500 hover:shadow-lg break-inside-avoid shadow-sm mb-4"
                                 onClick={() => setLightboxImage(img)}
-                              />
+                              >
+                                <img
+                                  src={img}
+                                  alt={`Project detail ${idx + 1}`}
+                                  className="w-full h-auto block transition-transform duration-700 group-hover:scale-105"
+                                  loading="lazy"
+                                />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                  <span className="bg-white/90 dark:bg-black/80 backdrop-blur text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full text-zinc-900 dark:text-white pointer-events-none">
+                                    Expand
+                                  </span>
+                                </div>
+                              </div>
                             ))}
                           </div>
                         </div>
