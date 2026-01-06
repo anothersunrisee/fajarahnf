@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform, useVelocity } from 'framer-motion';
-import { Moon, Sun, Search, Command, Github, Linkedin, ExternalLink, Mail, MapPin, Briefcase, User, Send, ChevronRight, ShieldCheck, QrCode, Instagram, Camera, Palette } from 'lucide-react';
+import { Moon, Sun, Search, Command, Github, Linkedin, ExternalLink, Mail, MapPin, Briefcase, User, Send, ChevronRight, ShieldCheck, QrCode, Instagram, Camera, Palette, Menu, X } from 'lucide-react';
 import { Project, Theme } from './types';
 import { PROJECTS } from './data/projects';
 import BentoCard from './components/BentoCard';
@@ -53,6 +53,7 @@ const Navbar = ({ theme, toggleTheme, currentView, setView }: {
 }) => {
   const [hoveredTab, setHoveredTab] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -67,72 +68,116 @@ const Navbar = ({ theme, toggleTheme, currentView, setView }: {
   ];
 
   return (
-    <motion.nav
-      initial={false}
-      animate={{
-        paddingTop: scrolled ? '0.75rem' : '1.5rem',
-        paddingBottom: scrolled ? '0.75rem' : '1.5rem',
-        backgroundColor: scrolled ? (theme === 'light' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(9, 9, 11, 0.8)') : 'transparent',
-      }}
-      className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 border-b border-transparent ${scrolled ? 'backdrop-blur-2xl border-zinc-200/50 dark:border-zinc-800/50 shadow-sm' : ''
-        }`}
-    >
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between relative">
-        <motion.div
-          onClick={() => setView('work')}
-          className="flex items-center gap-3 group cursor-pointer"
-          whileHover={{ scale: 1.02 }}
-        >
-          <div className="relative w-10 h-10 flex items-center justify-center">
-            <motion.div
-              animate={{ rotate: [0, 90, 180, 270, 360] }}
-              transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-              className="absolute inset-0 bg-gradient-to-tr from-blue-500 via-purple-500 to-pink-500 rounded-xl opacity-20 blur-md group-hover:opacity-40 transition-opacity"
-            />
-            <div className="relative z-10 w-9 h-9 bg-zinc-950 dark:bg-white rounded-xl flex items-center justify-center shadow-lg transition-transform group-hover:rotate-12 group-hover:scale-110">
-              <Command className="w-5 h-5 text-white dark:text-black" />
-            </div>
-          </div>
-          <span className="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-zinc-950 to-zinc-500 dark:from-white dark:to-zinc-400">
-            fajarahnf
-          </span>
-        </motion.div>
-
-        <div className="hidden md:flex items-center bg-zinc-200/40 dark:bg-zinc-800/40 backdrop-blur-md px-1.5 py-1.5 rounded-2xl border border-white/20 dark:border-zinc-700/30 relative">
-          {navLinks.map((link) => (
-            <button
-              key={link.id}
-              onClick={() => setView(link.id)}
-              onMouseEnter={() => setHoveredTab(link.id)}
-              onMouseLeave={() => setHoveredTab(null)}
-              className={`relative px-6 py-2 text-sm font-bold transition-colors z-10 ${currentView === link.id ? 'text-zinc-950 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'
-                }`}
-            >
-              {link.name}
-              {(hoveredTab === link.id || currentView === link.id) && (
-                <motion.div
-                  layoutId="liquid-pill"
-                  className="absolute inset-0 bg-white dark:bg-zinc-700 rounded-xl shadow-sm z-[-1]"
-                  initial={false}
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                />
-              )}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-3">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={toggleTheme}
-            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 shadow-sm"
+    <>
+      <motion.nav
+        initial={false}
+        animate={{
+          paddingTop: scrolled ? '0.75rem' : '1.5rem',
+          paddingBottom: scrolled ? '0.75rem' : '1.5rem',
+          backgroundColor: scrolled ? (theme === 'light' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(9, 9, 11, 0.8)') : 'transparent',
+        }}
+        className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 border-b border-transparent ${scrolled ? 'backdrop-blur-2xl border-zinc-200/50 dark:border-zinc-800/50 shadow-sm' : ''
+          }`}
+      >
+        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between relative">
+          <motion.div
+            onClick={() => {
+              setView('work');
+              setIsMobileMenuOpen(false);
+            }}
+            className="flex items-center gap-3 group cursor-pointer"
+            whileHover={{ scale: 1.02 }}
           >
-            {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-          </motion.button>
+            <div className="relative w-10 h-10 flex items-center justify-center">
+              <motion.div
+                animate={{ rotate: [0, 90, 180, 270, 360] }}
+                transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-0 bg-gradient-to-tr from-blue-500 via-purple-500 to-pink-500 rounded-xl opacity-20 blur-md group-hover:opacity-40 transition-opacity"
+              />
+              <div className="relative z-10 w-9 h-9 bg-zinc-950 dark:bg-white rounded-xl flex items-center justify-center shadow-lg transition-transform group-hover:rotate-12 group-hover:scale-110">
+                <Command className="w-5 h-5 text-white dark:text-black" />
+              </div>
+            </div>
+            <span className="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-zinc-950 to-zinc-500 dark:from-white dark:to-zinc-400">
+              fajarahnf
+            </span>
+          </motion.div>
+
+          {/* Desktop Nav */}
+          <div className="hidden md:flex items-center bg-zinc-200/40 dark:bg-zinc-800/40 backdrop-blur-md px-1.5 py-1.5 rounded-2xl border border-white/20 dark:border-zinc-700/30 relative">
+            {navLinks.map((link) => (
+              <button
+                key={link.id}
+                onClick={() => setView(link.id)}
+                onMouseEnter={() => setHoveredTab(link.id)}
+                onMouseLeave={() => setHoveredTab(null)}
+                className={`relative px-6 py-2 text-sm font-bold transition-colors z-10 ${currentView === link.id ? 'text-zinc-950 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'
+                  }`}
+              >
+                {link.name}
+                {(hoveredTab === link.id || currentView === link.id) && (
+                  <motion.div
+                    layoutId="liquid-pill"
+                    className="absolute inset-0 bg-white dark:bg-zinc-700 rounded-xl shadow-sm z-[-1]"
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={toggleTheme}
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 shadow-sm"
+            >
+              {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+            </motion.button>
+
+            {/* Mobile Menu Toggle */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 shadow-sm"
+            >
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </motion.button>
+          </div>
         </div>
-      </div>
-    </motion.nav>
+      </motion.nav>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed inset-0 z-40 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl pt-32 px-6 md:hidden"
+          >
+            <div className="flex flex-col gap-6">
+              {navLinks.map((link) => (
+                <button
+                  key={link.id}
+                  onClick={() => {
+                    setView(link.id);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`text-4xl font-black tracking-tight text-left ${currentView === link.id ? 'text-blue-600 dark:text-blue-500' : 'text-zinc-900 dark:text-white'
+                    }`}
+                >
+                  {link.name}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 
@@ -372,12 +417,12 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const handleHashChange = () => {
-      if (window.location.hash === '#admin') {
+      if (window.location.hash === '#sysadminpanel') {
         setView('admin');
       }
     };
     window.addEventListener('hashchange', handleHashChange);
-    if (window.location.hash === '#admin') {
+    if (window.location.hash === '#sysadminpanel') {
       setView('admin');
     }
     return () => window.removeEventListener('hashchange', handleHashChange);

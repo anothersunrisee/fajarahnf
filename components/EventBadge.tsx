@@ -29,7 +29,7 @@ useTexture.preload('/assets/badge/card.png')
 export default function EventBadge() {
     const debug = false
     return (
-        <div className="w-full h-full relative rounded-[2.5rem] overflow-hidden bg-black">
+        <div className="w-full h-full relative rounded-[2.5rem] overflow-hidden bg-black cursor-grab active:cursor-grabbing" style={{ touchAction: 'none' }}>
             <Canvas camera={{ position: [0, 0, 13], fov: 25 }}>
                 <ambientLight intensity={Math.PI} />
                 <Physics debug={debug} interpolate gravity={[0, -40, 0]} timeStep={1 / 60}>

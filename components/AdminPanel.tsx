@@ -16,7 +16,7 @@ export default function AdminPanel() {
     // Simple hardcoded password for "hidden" access
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        if (password === 'fajar123') { // Simple secret
+        if (password === 'fajarahnf77677') { // Simple secret
             setIsAuthenticated(true);
             fetchProjects();
         } else {
