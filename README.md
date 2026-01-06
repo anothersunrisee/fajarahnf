@@ -76,7 +76,3 @@ This will generate optimized static assets in the `dist` directory.
 -   **Behance**: [FajarAhnaf](https://www.behance.net/FajarAhnaf)
 
 ---
-
-<div align="center">
-    Built with ❤️ and ☕ by Fajar Ahnaf
-</div>
