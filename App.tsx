@@ -12,6 +12,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import AdminPanel from './components/AdminPanel';
+import { supabase } from './utils/supabase';
 
 // Fix for default marker icon in React Leaflet
 // @ts-ignore
@@ -399,10 +400,31 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    const randomized = [...PROJECTS].sort(() => Math.random() - 0.5);
-    setShuffledProjects(randomized);
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
+    // New Logic: Fetch from Supabase
+    const fetchProjects = async () => {
+      try {
+        const { data, error } = await supabase.from('projects').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+
+        // If database is empty, fallback to empty array or we could keep local mock as fallback if desired
+        // For now, let's trust the DB. But to ensure types align and shuffle:
+        const dbProjects = ((data || []).map((p: any) => ({
+          ...p,
+          contentImages: p.content_images || (p.contentimage ? [p.contentimage] : [])
+        }))) as Project[];
+        const randomized = [...dbProjects].sort(() => Math.random() - 0.5);
+
+        setShuffledProjects(randomized);
+      } catch (err) {
+        console.error('Error loading projects:', err);
+        // Fallback to local data if DB fails completely?
+        // setShuffledProjects([...PROJECTS].sort(() => Math.random() - 0.5));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProjects();
   }, []);
 
   const filteredProjects = useMemo(() => {
@@ -459,7 +481,12 @@ const App: React.FC = () => {
         </AnimatePresence>
       </main>
 
-      <ProjectModal project={selectedProject} onClose={() => setSelectedProject(null)} />
+      <ProjectModal
+        project={selectedProject}
+        onClose={() => setSelectedProject(null)}
+        allProjects={shuffledProjects}
+        onSelectProject={setSelectedProject}
+      />
 
       <footer className="py-24 border-t border-zinc-100 dark:border-zinc-900 bg-white dark:bg-zinc-950 transition-colors">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16">

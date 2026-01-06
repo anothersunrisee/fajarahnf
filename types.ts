@@ -1,5 +1,5 @@
 
-export type CardSize = 'square' | 'portrait' | 'landscape';
+export type CardSize = 'square' | 'portrait' | 'landscape' | 'tall' | 'wide';
 
 export interface ProjectMedia {
   type: 'image' | 'video' | 'gif';
@@ -18,6 +18,8 @@ export interface Project {
   description: string;
   tags: string[];
   image: string;
+  contentImages?: string[];
+  tools?: string[];
   size: CardSize;
   link: string;
   videoUrl?: string;

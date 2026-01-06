@@ -13,6 +13,8 @@ const BentoCard: React.FC<BentoCardProps> = ({ project, onClick }) => {
     switch (project.size) {
       case 'portrait': return 'aspect-[3/4]';
       case 'landscape': return 'aspect-[4/3]';
+      case 'tall': return 'aspect-[9/16]';
+      case 'wide': return 'aspect-[16/9]';
       case 'square': return 'aspect-square';
       default: return 'aspect-square';
     }

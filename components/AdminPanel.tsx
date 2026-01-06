@@ -26,13 +26,17 @@ export default function AdminPanel() {
 
     const fetchProjects = async () => {
         setIsLoading(true);
-        // In a real scenario, we would fetch from Supabase.
-        // implementing fallback to local if Supabase is empty or error for now, 
-        // but code below is set to fetch from 'projects' table.
         try {
             const { data, error } = await supabase.from('projects').select('*').order('created_at', { ascending: false });
             if (error) throw error;
-            if (data) setProjects(data as any); // Cast for now
+            if (data) {
+                // Map snake_case DB columns to camelCase type
+                const mappedData = data.map((p: any) => ({
+                    ...p,
+                    contentImages: p.content_images || (p.contentimage ? [p.contentimage] : [])
+                }));
+                setProjects(mappedData);
+            }
         } catch (error) {
             console.error('Error fetching projects:', error);
         } finally {
@@ -49,13 +53,20 @@ export default function AdminPanel() {
             // Need to stringify complex objects if Supabase expects JSON but we are sending as object, 
             // or if column type is JSONB, Supabase handles it. Assuming JSONB columns for arrays.
 
+            const payload = {
+                ...projectToSave,
+                content_images: projectToSave.contentImages
+            };
+            // Remove the application-side key to avoid DB 'column not found' error if it doesn't match
+            delete (payload as any).contentImages;
+
             if (projectToSave.id) {
                 // Update
-                const { error } = await supabase.from('projects').update(projectToSave).eq('id', projectToSave.id);
+                const { error } = await supabase.from('projects').update(payload).eq('id', projectToSave.id);
                 if (error) throw error;
             } else {
                 // Insert
-                const { error } = await supabase.from('projects').insert([projectToSave]);
+                const { error } = await supabase.from('projects').insert([payload]);
                 if (error) throw error;
             }
 
@@ -79,39 +90,50 @@ export default function AdminPanel() {
         }
     };
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = (field: 'image' | 'contentImages') => async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
-        const file = e.target.files[0];
-        // Support for: .png .jpg .jpeg .gif .heic
+
+        const files = Array.from(e.target.files);
         const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/heic'];
-
-        // Basic MIME check (some browsers might empty type for heic, so we trust extension too)
-        if (file.type && !allowedTypes.includes(file.type) && !file.name.match(/\.(heic|gif|jpg|jpeg|png)$/i)) {
-            alert('Only .png, .jpg, .jpeg, .gif, .heic formats are allowed');
-            return;
-        }
-
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
-        const filePath = `${fileName}`;
+        const uploadedUrls: string[] = [];
 
         try {
-            const { error: uploadError } = await supabase.storage
-                .from('portfolio-images')
-                .upload(filePath, file);
+            for (const file of files) {
+                if (file.type && !allowedTypes.includes(file.type) && !file.name.match(/\.(heic|gif|jpg|jpeg|png)$/i)) {
+                    alert(`Skipping ${file.name}: Only .png, .jpg, .jpeg, .gif, .heic formats are allowed`);
+                    continue;
+                }
 
-            if (uploadError) throw uploadError;
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
+                const filePath = `${fileName}`;
 
-            const { data } = supabase.storage.from('portfolio-images').getPublicUrl(filePath);
+                const { error: uploadError } = await supabase.storage
+                    .from('portfolio-images')
+                    .upload(filePath, file);
 
-            if (editingProject) {
-                setEditingProject({ ...editingProject, image: data.publicUrl });
+                if (uploadError) throw uploadError;
+
+                const { data } = supabase.storage.from('portfolio-images').getPublicUrl(filePath);
+                uploadedUrls.push(data.publicUrl);
+            }
+
+            if (uploadedUrls.length > 0) {
+                if (field === 'contentImages') {
+                    const currentImages = editingProject?.contentImages || [];
+                    const combinedImages = [...currentImages, ...uploadedUrls].slice(0, 10);
+                    if ([...currentImages, ...uploadedUrls].length > 10) {
+                        alert('Maximum 10 images allowed. Some images were truncated.');
+                    }
+                    setEditingProject(prev => prev ? ({ ...prev, contentImages: combinedImages }) : null);
+                } else {
+                    setEditingProject(prev => prev ? ({ ...prev, [field]: uploadedUrls[0] }) : null);
+                }
             }
         } catch (error: any) {
             console.error('Error uploading image:', error);
-            // More specific error message
             if (error.message && error.message.includes('bucket not found')) {
-                alert('Error: "portfolio-images" bucket not found. Please create it in your Supabase dashboard and make it public.');
+                alert('Error: "portfolio-images" bucket not found. Please create it in your Supabase dashboard.');
             } else {
                 alert(`Error upload: ${error.message || 'Unknown error'}`);
             }
@@ -201,13 +223,24 @@ export default function AdminPanel() {
                                         value={editingProject.size || 'square'}
                                         onChange={e => setEditingProject({ ...editingProject, size: e.target.value as any })}
                                     >
-                                        <option value="square">Square</option>
-                                        <option value="tall">Tall</option>
-                                        <option value="wide">Wide</option>
-                                        <option value="landscape">Landscape</option>
-                                        <option value="portrait">Portrait</option>
+                                        <option value="square">Square (1:1)</option>
+                                        <option value="tall">Tall (9:16)</option>
+                                        <option value="wide">Wide (16:9)</option>
                                     </select>
                                 </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase text-zinc-500">Tools (Comma separated)</label>
+                                <input
+                                    className="w-full p-3 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 outline-none focus:border-blue-500 font-bold"
+                                    value={editingProject.tools?.join(', ') || ''}
+                                    onChange={e => setEditingProject({
+                                        ...editingProject,
+                                        tools: e.target.value.split(',').map(t => t.trim()).filter(Boolean)
+                                    })}
+                                    placeholder="e.g. Photoshop, Figma, React"
+                                />
                             </div>
 
                             <div className="space-y-2">
@@ -222,7 +255,7 @@ export default function AdminPanel() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase text-zinc-500">Image</label>
+                                    <label className="text-xs font-bold uppercase text-zinc-500">Main Image (Header & Card)</label>
                                     <div className="flex gap-2">
                                         <input
                                             className="w-full p-3 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 outline-none focus:border-blue-500 font-bold text-sm font-mono overflow-hidden"
@@ -232,12 +265,48 @@ export default function AdminPanel() {
                                         />
                                         <label className="p-3 bg-blue-600 text-white rounded-xl cursor-pointer hover:bg-blue-700 transition flex items-center justify-center">
                                             <ImageIcon className="w-5 h-5" />
-                                            <input type="file" accept=".png,.jpg,.jpeg,.gif,.heic" className="hidden" onChange={handleImageUpload} />
+                                            <input type="file" accept=".png,.jpg,.jpeg,.gif,.heic" className="hidden" onChange={handleImageUpload('image')} />
                                         </label>
                                     </div>
                                     {editingProject.image && <img src={editingProject.image} alt="Preview" className="h-20 w-auto rounded-lg mt-2 border border-zinc-200 dark:border-zinc-800" />}
                                 </div>
-                                {/* Video URL Removed as requested - replaced by GIF support in Main Image */}
+
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold uppercase text-zinc-500">Article Images (Max 10)</label>
+                                    <div className="flex gap-2">
+                                        <div className="flex-1 p-3 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 outline-none focus:border-blue-500 font-bold text-sm overflow-hidden flex flex-wrap gap-2">
+                                            {editingProject.contentImages?.length ? (
+                                                editingProject.contentImages.map((img, idx) => (
+                                                    <div key={idx} className="relative group w-16 h-16">
+                                                        <img src={img} alt={`Content ${idx}`} className="w-full h-full object-cover rounded-lg" />
+                                                        <button
+                                                            onClick={() => {
+                                                                const newImages = editingProject.contentImages!.filter((_, i) => i !== idx);
+                                                                setEditingProject({ ...editingProject, contentImages: newImages });
+                                                            }}
+                                                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        >
+                                                            <X className="w-3 h-3" />
+                                                        </button>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <span className="text-zinc-400 font-normal">No images uploaded</span>
+                                            )}
+                                        </div>
+                                        <label className="p-3 bg-blue-600 text-white rounded-xl cursor-pointer hover:bg-blue-700 transition flex items-center justify-center h-fit">
+                                            <ImageIcon className="w-5 h-5" />
+                                            <input
+                                                type="file"
+                                                accept=".png,.jpg,.jpeg,.gif,.heic"
+                                                multiple
+                                                className="hidden"
+                                                onChange={handleImageUpload('contentImages')}
+                                            />
+                                        </label>
+                                    </div>
+                                    <p className="text-[10px] text-zinc-400">Selected: {editingProject.contentImages?.length || 0}/10</p>
+                                </div>
                             </div>
 
                             <div className="space-y-2">
@@ -256,8 +325,8 @@ export default function AdminPanel() {
                                                     setEditingProject({ ...editingProject, tags: newTags });
                                                 }}
                                                 className={`px-3 py-1.5 rounded-lg text-sm font-bold border transition-colors flex items-center gap-2 ${isSelected
-                                                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                                                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-blue-500'
+                                                    ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                                                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-blue-500'
                                                     }`}
                                             >
                                                 {tag} {isSelected && <Check className="w-3 h-3" />}
