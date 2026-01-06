@@ -28,26 +28,45 @@ useTexture.preload('/assets/badge/card.png')
 
 export default function EventBadge() {
     const debug = false
+    const [theme, setTheme] = useState<'light' | 'dark'>('light')
+
+    useEffect(() => {
+        const checkTheme = () => {
+            const isDark = document.documentElement.classList.contains('dark')
+            setTheme(isDark ? 'dark' : 'light')
+        }
+        checkTheme()
+        const observer = new MutationObserver(checkTheme)
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+        return () => observer.disconnect()
+    }, [])
+
+    const bgColor = theme === 'dark' ? '#09090b' : '#fafafa'
+    const lightColor = theme === 'dark' ? 'white' : '#09090b'
+
     return (
-        <div className="w-full h-full relative rounded-[2.5rem] overflow-hidden bg-black cursor-grab active:cursor-grabbing" style={{ touchAction: 'none' }}>
+        <div
+            className="w-full h-full relative overflow-hidden transition-colors duration-500 cursor-grab active:cursor-grabbing"
+            style={{ touchAction: 'none', backgroundColor: bgColor }}
+        >
             <Canvas camera={{ position: [0, 0, 13], fov: 25 }}>
-                <ambientLight intensity={Math.PI} />
+                <ambientLight intensity={theme === 'dark' ? Math.PI : Math.PI * 1.5} />
                 <Physics debug={debug} interpolate gravity={[0, -40, 0]} timeStep={1 / 60}>
-                    <Band />
+                    <Band theme={theme} />
                 </Physics>
-                <Environment background blur={0.75}>
-                    <color attach="background" args={['black']} />
-                    <Lightformer intensity={2} color="white" position={[0, -1, 5]} rotation={[0, 0, Math.PI / 3]} scale={[100, 0.1, 1]} />
-                    <Lightformer intensity={3} color="white" position={[-1, -1, 1]} rotation={[0, 0, Math.PI / 3]} scale={[100, 0.1, 1]} />
-                    <Lightformer intensity={3} color="white" position={[1, 1, 1]} rotation={[0, 0, Math.PI / 3]} scale={[100, 0.1, 1]} />
-                    <Lightformer intensity={10} color="white" position={[-10, 0, 14]} rotation={[0, Math.PI / 2, Math.PI / 3]} scale={[100, 10, 1]} />
+                <Environment blur={0.75}>
+                    <color attach="background" args={[bgColor]} />
+                    <Lightformer intensity={2} color={lightColor} position={[0, -1, 5]} rotation={[0, 0, Math.PI / 3]} scale={[100, 0.1, 1]} />
+                    <Lightformer intensity={3} color={lightColor} position={[-1, -1, 1]} rotation={[0, 0, Math.PI / 3]} scale={[100, 0.1, 1]} />
+                    <Lightformer intensity={3} color={lightColor} position={[1, 1, 1]} rotation={[0, 0, Math.PI / 3]} scale={[100, 0.1, 1]} />
+                    <Lightformer intensity={10} color={lightColor} position={[-10, 0, 14]} rotation={[0, Math.PI / 2, Math.PI / 3]} scale={[100, 10, 1]} />
                 </Environment>
             </Canvas>
         </div>
     )
 }
 
-function Band({ maxSpeed = 50, minSpeed = 10 }) {
+function Band({ maxSpeed = 50, minSpeed = 10, theme = 'dark' }) {
     const band = useRef<THREE.Mesh>(null)
     const fixed = useRef<RapierRigidBody>(null)
     const j1 = useRef<RefRigidBody>(null)

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform, useVelocity } from 'framer-motion';
-import { Moon, Sun, Search, Command, Github, Linkedin, ExternalLink, Mail, MapPin, Briefcase, User, Send, ChevronRight, ShieldCheck, QrCode, Instagram, Camera, Palette, Menu, X } from 'lucide-react';
+import { Moon, Sun, Search, Github, Linkedin, ExternalLink, Mail, MapPin, Briefcase, User, Send, ChevronRight, ShieldCheck, QrCode, Instagram, Camera, Palette, Menu, X } from 'lucide-react';
 import { Project, Theme } from './types';
 import { PROJECTS } from './data/projects';
 import BentoCard from './components/BentoCard';
@@ -12,6 +12,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import AdminPanel from './components/AdminPanel';
+import HeroStickers from './components/HeroStickers';
 import { supabase } from './utils/supabase';
 
 // Fix for default marker icon in React Leaflet
@@ -94,8 +95,9 @@ const Navbar = ({ theme, toggleTheme, currentView, setView }: {
                 transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
                 className="absolute inset-0 bg-gradient-to-tr from-blue-500 via-purple-500 to-pink-500 rounded-xl opacity-20 blur-md group-hover:opacity-40 transition-opacity"
               />
-              <div className="relative z-10 w-9 h-9 bg-zinc-950 dark:bg-white rounded-xl flex items-center justify-center shadow-lg transition-transform group-hover:rotate-12 group-hover:scale-110">
-                <Command className="w-5 h-5 text-white dark:text-black" />
+              <div className="relative z-10 w-9 h-9 bg-zinc-950 dark:bg-white rounded-xl flex items-center justify-center shadow-lg transition-transform group-hover:rotate-12 group-hover:scale-110 overflow-hidden">
+                <img src="/assets/ahnf-logo-white.png" alt="Logo" className="w-5 h-5 object-contain block dark:hidden" />
+                <img src="/assets/ahnf-logo-black.png" alt="Logo" className="w-5 h-5 object-contain hidden dark:block" />
               </div>
             </div>
             <span className="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-zinc-950 to-zinc-500 dark:from-white dark:to-zinc-400">
@@ -219,7 +221,7 @@ const WorkView = ({ projects, isLoading, resetTags, setSelectedProject }: {
 
 const AboutView = () => (
   <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <div className="md:col-span-1 md:row-span-2 h-[650px] md:h-auto min-h-[600px]">
+    <div className="md:col-span-1 md:row-span-2 h-[500px] md:h-auto min-h-[500px] rounded-[3rem] border border-zinc-200 dark:border-zinc-800 overflow-hidden">
       <EventBadge />
     </div>
     <div className="md:col-span-2 p-10 rounded-[3rem] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-center relative overflow-hidden group">
@@ -242,7 +244,14 @@ const AboutView = () => (
       </div>
     </div>
     <div className="md:col-span-1 p-0 rounded-[2rem] bg-zinc-100 dark:bg-zinc-900 overflow-hidden relative h-full min-h-[300px]">
-      <MapContainer center={[-7.7956, 110.3695]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false} dragging={false} scrollWheelZoom={false}>
+      <MapContainer
+        center={[-7.7956, 110.3695]}
+        zoom={13}
+        style={{ height: '100%', width: '100%' }}
+        zoomControl={false}
+        dragging={false}
+        scrollWheelZoom={false}
+      >
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
@@ -258,13 +267,13 @@ const AboutView = () => (
         </div>
       </div>
     </div>
-    <div className="md:col-span-3 p-12 rounded-[3rem] bg-zinc-950 dark:bg-white text-white dark:text-black flex flex-col md:flex-row justify-between items-center gap-10 shadow-2xl relative overflow-hidden group transition-colors">
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+    <div className="md:col-span-3 p-12 rounded-[3rem] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex flex-col md:flex-row justify-between items-center gap-10 shadow-sm relative overflow-hidden group transition-colors">
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
       <div className="text-center md:text-left relative z-10">
-        <h3 className="text-4xl font-black mb-3 tracking-tight dark:text-zinc-900">Let's start a project</h3>
-        <p className="text-zinc-400 dark:text-zinc-500 text-lg">Combining aesthetics with technology.</p>
+        <h3 className="text-4xl font-black mb-3 tracking-tight text-zinc-900 dark:text-white">Let's start a project</h3>
+        <p className="text-zinc-500 dark:text-zinc-400 text-lg">Combining aesthetics with technology.</p>
       </div>
-      <button className="relative z-10 px-10 py-5 bg-blue-600 text-white rounded-2xl font-black text-xl hover:scale-105 active:scale-95 transition-transform flex items-center gap-4 shadow-xl">
+      <button className="relative z-10 px-10 py-5 bg-blue-600 text-white rounded-2xl font-black text-xl hover:scale-110 active:scale-95 transition-transform flex items-center gap-4 shadow-xl shadow-blue-500/20">
         Get in Touch <ChevronRight className="w-8 h-8" />
       </button>
     </div>
@@ -345,7 +354,14 @@ const ContactView = () => (
 
       {/* Location / Status Card */}
       <div className="md:col-span-1 p-0 rounded-[2.5rem] bg-zinc-100 dark:bg-zinc-900 overflow-hidden relative shadow-xl h-full min-h-[200px]">
-        <MapContainer center={[-7.7956, 110.3695]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false} dragging={false} scrollWheelZoom={false}>
+        <MapContainer
+          center={[-7.7956, 110.3695]}
+          zoom={13}
+          style={{ height: '100%', width: '100%' }}
+          zoomControl={false}
+          dragging={false}
+          scrollWheelZoom={false}
+        >
           <TileLayer
             url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
@@ -379,6 +395,7 @@ const App: React.FC = () => {
   const [shuffledProjects, setShuffledProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const heroRef = useRef<HTMLElement>(null);
 
   // Dynamic SEO System
   useEffect(() => {
@@ -493,16 +510,50 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen transition-colors duration-500 dark:bg-zinc-950 selection:bg-blue-500 selection:text-white">
+    <div className="min-h-screen transition-colors duration-500 bg-zinc-50 dark:bg-zinc-950 selection:bg-blue-500 selection:text-white">
       <Navbar theme={theme} toggleTheme={toggleTheme} currentView={view} setView={handleNavChange} />
 
       <main className="max-w-7xl mx-auto px-4 pt-32 pb-20 overflow-hidden">
         <AnimatePresence mode="wait">
           {view === 'work' && (
             <motion.div key="work-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <header className="py-20 text-center">
-                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="inline-block px-4 py-2 mb-8 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-sm font-black uppercase tracking-widest border border-blue-500/20 shadow-sm">Available for global direction</motion.div>
-                <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-5xl md:text-8xl font-black tracking-tighter text-zinc-950 dark:text-white mb-8 leading-[0.95] transition-colors">Visual Visionary & <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500">Creative Designer</span></motion.h1>
+              <header ref={heroRef} className="py-32 text-center relative isolate">
+                <HeroStickers constraintsRef={heroRef} theme={theme} />
+                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="inline-block px-4 py-2 mb-8 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-sm font-black uppercase tracking-widest border border-blue-500/20 shadow-sm relative z-30">Available for global direction</motion.div>
+                <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-6xl md:text-9xl font-black tracking-tight text-zinc-950 dark:text-white mb-8 leading-[0.85] md:leading-[0.85] transition-colors relative z-30 flex flex-col items-center">
+                  <div className="flex flex-wrap justify-center gap-x-4">
+                    <span className="flex items-baseline">
+                      <span className="font-pinyon text-7xl md:text-[1.2em]">V</span>
+                      <span className="font-dm lowercase -ml-2 md:-ml-4">isu</span>
+                      <span className="font-pixel text-[0.8em]">al</span>
+                    </span>
+                    <span className="flex items-baseline">
+                      <span className="font-pinyon text-7xl md:text-[1.2em]">V</span>
+                      <span className="font-dm lowercase -ml-2 md:-ml-4">isi</span>
+                      <span className="font-pixel text-[0.8em]">on</span>
+                      <span className="font-pinyon lowercase text-[0.7em]">ary</span>
+                    </span>
+                  </div>
+
+                  <div className="-my-6 md:-my-14 relative z-40">
+                    <span className="font-pinyon italic text-7xl md:text-[1.3em] text-zinc-950 dark:text-white">&</span>
+                  </div>
+
+                  <div className="flex flex-wrap justify-center items-center gap-x-4 -mt-2 md:-mt-6">
+                    <span className="flex items-baseline">
+                      <span className="font-pinyon text-7xl md:text-[1.2em]">C</span>
+                      <span className="font-dm lowercase -ml-2 md:-ml-4">rea</span>
+                      <span className="font-pixel text-[0.8em]">t</span>
+                      <span className="font-pinyon lowercase text-[0.7em]">ive</span>
+                    </span>
+                    <span className="flex items-baseline">
+                      <span className="font-pinyon text-7xl md:text-[1.2em]">D</span>
+                      <span className="font-dm lowercase -ml-2 md:-ml-4">esi</span>
+                      <span className="font-pixel text-[0.8em]">gn</span>
+                      <span className="font-pinyon lowercase text-[0.7em]">er</span>
+                    </span>
+                  </div>
+                </motion.h1>
               </header>
               <TagFilter selectedTags={selectedTags} toggleTag={toggleTag} resetTags={resetTags} />
               <WorkView projects={filteredProjects} isLoading={isLoading} resetTags={resetTags} setSelectedProject={setSelectedProject} />
@@ -537,7 +588,8 @@ const App: React.FC = () => {
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16">
           <div className="col-span-1 lg:col-span-2">
             <div className="flex items-center gap-3 mb-8">
-              <Command className="w-10 h-10 text-zinc-950 dark:text-white transition-colors" />
+              <img src="/assets/ahnf-logo-black.png" alt="Logo" className="w-10 h-10 object-contain block dark:hidden" />
+              <img src="/assets/ahnf-logo-white.png" alt="Logo" className="w-10 h-10 object-contain hidden dark:block" />
               <span className="font-black text-3xl text-zinc-950 dark:text-white tracking-tighter transition-colors">fajarahnf.</span>
             </div>
             <p className="text-zinc-500 dark:text-zinc-400 max-w-sm text-xl leading-relaxed font-bold transition-colors">Leading creative teams and crafting immersive visual stories through design, motion, and technology.</p>

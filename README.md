@@ -13,14 +13,13 @@ Welcome to the personal portfolio of **Fajar Ahnaf Mahardika**. This project is 
 
 ## ✨ Key Features
 
--   **Immersive 3D Experience**: Integrated **Three.js** and **React Three Fiber** for real-time 3D rendering, featuring a physics-based interactive ID badge with mobile-optimized touch gestures.
--   **Dynamic UI/UX**: Smooth transitions and animations powered by **Framer Motion**.
+-   **Immersive 3D Experience**: Integrated **Three.js** and **React Three Fiber** for real-time 3D rendering, featuring a physics-based interactive ID badge with theme-aware lighting.
+-   **Eclectic Hero Typography**: A custom monochromatic "ransom note" typographic style mixing **Pinyon Script**, **DM Sans**, and **Pixelify Sans** within single words for a high-fashion aesthetic.
+-   **Draggable Stickers**: Interactive, draggable stickers in the hero section that maintain position across theme transitions, adding a playful layer to the UX.
+-   **Refined UI Design**: Primary font updated to **DM Sans** for a modern feel, accompanied by theme-aware **radial glow backgrounds** and polished bento-grid boundaries.
 -   **Smart Bento Grid**: A responsive masonry layout for showcasing projects with automatic aspect ratio detection (Portrait/Landscape/Square).
--   **Custom Admin Panel**: A hidden, password-protected dashboard to manage projects, upload images (multi-upload support), and edit content dynamically.
--   **Supabase Integration**: Real-time database and storage for managing portfolio content and assets.
--   **Lightbox Gallery**: Full-screen image preview with seamless transitions.
--   **Interactive Map**: Custom **Leaflet** map integration to display location with style.
--   **Theme System**: Fully supported Light and Dark modes with persistent state.
+-   **Theme System**: Coordinated CSS-variable system driving synchronized light and dark modes across all components including 3D scenes and interactive maps.
+-   **Custom Admin Panel**: A hidden dashboard to manage projects, upload assets, and edit content dynamically with Supabase integration.
 
 ## 🛠 Tech Stack
 
