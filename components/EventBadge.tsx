@@ -49,6 +49,9 @@ export default function EventBadge() {
             className="w-full h-full relative overflow-hidden transition-colors duration-500 cursor-grab active:cursor-grabbing"
             style={{ touchAction: 'none', backgroundColor: bgColor }}
         >
+            <div className="absolute inset-0 flex items-center justify-center text-zinc-400 text-xs pointer-events-none z-0">
+                Loading 3D Experience...
+            </div>
             <Canvas camera={{ position: [0, 0, 13], fov: 25 }}>
                 <ambientLight intensity={theme === 'dark' ? Math.PI : Math.PI * 1.5} />
                 <Physics debug={debug} interpolate gravity={[0, -40, 0]} timeStep={1 / 60}>
